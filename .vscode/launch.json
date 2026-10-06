@@ -6,7 +6,8 @@
       "request": "launch",
       "type": "dart",
       "device": "chrome",
-      "program": "lib/main.dart"
+      "program": "lib/main.dart",
+      "preLaunchTask": "Start Proxy Server"
     },
     {
       "name": "Chrome (Web - Profile)",
@@ -14,7 +15,8 @@
       "type": "dart",
       "device": "chrome",
       "program": "lib/main.dart",
-      "flutterMode": "profile"
+      "flutterMode": "profile",
+      "preLaunchTask": "Start Proxy Server"
     }
   ]
 }

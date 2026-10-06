@@ -1,53 +1,84 @@
-// Web platform: Google Apps Script blocks iframes (X-Frame-Options: SAMEORIGIN).
-// Instead, show a launch button that opens the URL in a new tab.
+// Web platform: Google Apps Script requires auth tied to script.google.com,
+// which cannot be proxied. We open it in a new tab instead.
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 
-Widget buildWebFrame(String url) {
-  return _WebLauncher(url: url);
-}
+Widget buildWebFrame(String url) => _WebLauncher(url: url);
 
-class _WebLauncher extends StatelessWidget {
+class _WebLauncher extends StatefulWidget {
   final String url;
   const _WebLauncher({required this.url});
 
   @override
+  State<_WebLauncher> createState() => _WebLauncherState();
+}
+
+class _WebLauncherState extends State<_WebLauncher> {
+  bool _opened = false;
+
+  void _open() {
+    html.window.open(widget.url, '_blank');
+    setState(() => _opened = true);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.open_in_browser, size: 56, color: Color(0xFF4E9F63)),
-          const SizedBox(height: 20),
-          const Text(
-            'Google Apps Script cannot load\ninside an embedded frame.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-          const SizedBox(height: 28),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF2E6F40),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E6F40),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(Icons.bolt, size: 40, color: Colors.white),
             ),
-            icon: const Icon(Icons.bolt),
-            label: const Text(
-              'Open Connect',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            const SizedBox(height: 24),
+            const Text(
+              'Connect',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-            onPressed: () => html.window.open(url, '_blank'),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            url,
-            style: const TextStyle(
-              color: Colors.white30,
-              fontSize: 11,
+            const SizedBox(height: 8),
+            Text(
+              _opened
+                  ? 'Opened in a new tab.\nSwitch to that tab to use the app.'
+                  : 'Tap below to open the app.\nSign in with your Google account when prompted.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  color: Colors.white60, fontSize: 14, height: 1.5),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E6F40),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: Icon(_opened ? Icons.open_in_new : Icons.bolt, size: 20),
+                label: Text(
+                  _opened ? 'Open Again' : 'Open Connect',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+                onPressed: _open,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

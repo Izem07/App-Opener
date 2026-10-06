@@ -1,0 +1,14 @@
+{
+  "name": "connect-proxy",
+  "version": "1.0.0",
+  "description": "Local proxy to strip X-Frame-Options from Google Apps Script for Flutter web dev",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "2.8.5",
+    "express": "4.19.2",
+    "http-proxy-middleware": "3.0.3"
+  }
+}
