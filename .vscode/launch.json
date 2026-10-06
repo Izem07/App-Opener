@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Chrome (Web)",
+      "request": "launch",
+      "type": "dart",
+      "device": "chrome",
+      "program": "lib/main.dart",
+      "args": [
+        "--web-renderer",
+        "html"
+      ]
+    },
+    {
+      "name": "Chrome (Web - Profile)",
+      "request": "launch",
+      "type": "dart",
+      "device": "chrome",
+      "program": "lib/main.dart",
+      "flutterMode": "profile",
+      "args": [
+        "--web-renderer",
+        "html"
+      ]
+    }
+  ]
+}
