@@ -6,11 +6,7 @@
       "request": "launch",
       "type": "dart",
       "device": "chrome",
-      "program": "lib/main.dart",
-      "args": [
-        "--web-renderer",
-        "html"
-      ]
+      "program": "lib/main.dart"
     },
     {
       "name": "Chrome (Web - Profile)",
@@ -18,11 +14,7 @@
       "type": "dart",
       "device": "chrome",
       "program": "lib/main.dart",
-      "flutterMode": "profile",
-      "args": [
-        "--web-renderer",
-        "html"
-      ]
+      "flutterMode": "profile"
     }
   ]
 }
