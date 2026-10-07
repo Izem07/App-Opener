@@ -9,7 +9,9 @@ import 'package:webview_flutter/webview_flutter.dart'
 // Platform-adaptive content builder: <iframe> on web, WebView on mobile
 import 'web_view_stub.dart' if (dart.library.html) 'web_view_web.dart';
 
-void main() {
+void main() async {
+  // Required before any async work or plugin initialization
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const ConnectApp());
 }
 

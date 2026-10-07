@@ -30,9 +30,7 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # ── 3. Install dependencies & regenerate Generated.xcconfig ───────────
-      #       This overwrites the Windows FLUTTER_ROOT path in Generated.xcconfig
-      #       with the correct macOS path on the CI runner.
+      # ── 3. Install dependencies (regenerates Generated.xcconfig) ───────────
       - name: Install Flutter dependencies
         run: flutter pub get
 
@@ -40,21 +38,20 @@ jobs:
       - name: Generate app icons
         run: dart run flutter_launcher_icons
 
-      # ── 5. Verify Generated.xcconfig has correct FLUTTER_ROOT ──────────────
-      - name: Check FLUTTER_ROOT
+      # ── 5. Verify FLUTTER_ROOT is correct macOS path ───────────────────────
+      - name: Verify FLUTTER_ROOT
         run: |
-          echo "=== Generated.xcconfig ==="
-          cat ios/Flutter/Generated.xcconfig
           FLUTTER_ROOT=$(grep FLUTTER_ROOT ios/Flutter/Generated.xcconfig | cut -d= -f2)
-          echo "FLUTTER_ROOT resolved to: $FLUTTER_ROOT"
+          echo "FLUTTER_ROOT = $FLUTTER_ROOT"
           ls "$FLUTTER_ROOT/packages/flutter_tools/bin/podhelper.rb"
 
-      # ── 6. Install CocoaPods ───────────────────────────────────────────────
+      # ── 6. Clean & install CocoaPods (avoids SPM/cache issues) ────────────
       - name: Install CocoaPods dependencies
-        run: pod install
+        run: |
+          pod install --repo-update
         working-directory: ios
 
-      # ── 7. Build iOS (unsigned) ────────────────────────────────────────────
+      # ── 7. Build iOS RELEASE (required for sideloading — debug crashes) ───
       - name: Build iOS release (no signing)
         run: flutter build ios --release --no-codesign
 
@@ -63,29 +60,28 @@ jobs:
         run: |
           APP_PATH=$(find build/ios/iphoneos -name "*.app" | head -1)
           echo "Found app at: $APP_PATH"
-
-          # Verify the app binary exists
           ls -la "$APP_PATH"
 
-          # Create proper Payload structure in a clean temp dir
+          # Clean temp build dir
           rm -rf /tmp/ipa_build
           mkdir -p /tmp/ipa_build/Payload
+
+          # Copy .app into Payload/
           cp -r "$APP_PATH" /tmp/ipa_build/Payload/
 
-          # Copy app icon as iTunesArtwork (required by some sideloaders)
+          # Add iTunesArtwork (required by some sideloaders)
           ICON_PATH=$(find "$APP_PATH" -name "Icon-App-1024x1024@1x.png" | head -1)
           if [ -n "$ICON_PATH" ]; then
             cp "$ICON_PATH" /tmp/ipa_build/iTunesArtwork
             echo "Added iTunesArtwork"
           fi
 
-          # Zip into IPA — paths must be Payload/Runner.app/... at root
+          # Zip — paths must be Payload/Runner.app/... at root level
           cd /tmp/ipa_build
           zip -r FedProgressConnect.ipa Payload/ iTunesArtwork 2>/dev/null || zip -r FedProgressConnect.ipa Payload/
-
           mv FedProgressConnect.ipa $GITHUB_WORKSPACE/
 
-          echo "=== IPA structure ==="
+          echo "=== IPA structure (first 20 entries) ==="
           unzip -l $GITHUB_WORKSPACE/FedProgressConnect.ipa | head -20
 
       # ── 9. Create GitHub Release & upload IPA ─────────────────────────────
