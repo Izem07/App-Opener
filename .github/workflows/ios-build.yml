@@ -58,14 +58,35 @@ jobs:
       - name: Build iOS release (no signing)
         run: flutter build ios --release --no-codesign
 
-      # ── 8. Package IPA ─────────────────────────────────────────────────────
+      # ── 8. Package IPA (SideStore compatible) ─────────────────────────────
       - name: Package IPA
         run: |
-          mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
-          cd build/ios/ipa
-          zip -r FedProgressConnect.ipa Payload/
-          mv FedProgressConnect.ipa ../../..
+          APP_PATH=$(find build/ios/iphoneos -name "*.app" | head -1)
+          echo "Found app at: $APP_PATH"
+
+          # Verify the app binary exists
+          ls -la "$APP_PATH"
+
+          # Create proper Payload structure in a clean temp dir
+          rm -rf /tmp/ipa_build
+          mkdir -p /tmp/ipa_build/Payload
+          cp -r "$APP_PATH" /tmp/ipa_build/Payload/
+
+          # Copy app icon as iTunesArtwork (required by some sideloaders)
+          ICON_PATH=$(find "$APP_PATH" -name "Icon-App-1024x1024@1x.png" | head -1)
+          if [ -n "$ICON_PATH" ]; then
+            cp "$ICON_PATH" /tmp/ipa_build/iTunesArtwork
+            echo "Added iTunesArtwork"
+          fi
+
+          # Zip into IPA — paths must be Payload/Runner.app/... at root
+          cd /tmp/ipa_build
+          zip -r FedProgressConnect.ipa Payload/ iTunesArtwork 2>/dev/null || zip -r FedProgressConnect.ipa Payload/
+
+          mv FedProgressConnect.ipa $GITHUB_WORKSPACE/
+
+          echo "=== IPA structure ==="
+          unzip -l $GITHUB_WORKSPACE/FedProgressConnect.ipa | head -20
 
       # ── 9. Create GitHub Release & upload IPA ─────────────────────────────
       - name: Create GitHub Release
