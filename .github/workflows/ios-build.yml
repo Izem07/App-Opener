@@ -30,7 +30,9 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # ── 3. Install dependencies ────────────────────────────────────────────
+      # ── 3. Install dependencies & regenerate Generated.xcconfig ───────────
+      #       This overwrites the Windows FLUTTER_ROOT path in Generated.xcconfig
+      #       with the correct macOS path on the CI runner.
       - name: Install Flutter dependencies
         run: flutter pub get
 
@@ -38,16 +40,25 @@ jobs:
       - name: Generate app icons
         run: dart run flutter_launcher_icons
 
-      # ── 5. Install CocoaPods ───────────────────────────────────────────────
+      # ── 5. Verify Generated.xcconfig has correct FLUTTER_ROOT ──────────────
+      - name: Check FLUTTER_ROOT
+        run: |
+          echo "=== Generated.xcconfig ==="
+          cat ios/Flutter/Generated.xcconfig
+          FLUTTER_ROOT=$(grep FLUTTER_ROOT ios/Flutter/Generated.xcconfig | cut -d= -f2)
+          echo "FLUTTER_ROOT resolved to: $FLUTTER_ROOT"
+          ls "$FLUTTER_ROOT/packages/flutter_tools/bin/podhelper.rb"
+
+      # ── 6. Install CocoaPods ───────────────────────────────────────────────
       - name: Install CocoaPods dependencies
         run: pod install
         working-directory: ios
 
-      # ── 6. Build iOS (unsigned) ────────────────────────────────────────────
+      # ── 7. Build iOS (unsigned) ────────────────────────────────────────────
       - name: Build iOS release (no signing)
         run: flutter build ios --release --no-codesign
 
-      # ── 7. Package IPA ─────────────────────────────────────────────────────
+      # ── 8. Package IPA ─────────────────────────────────────────────────────
       - name: Package IPA
         run: |
           mkdir -p build/ios/ipa/Payload
@@ -56,7 +67,7 @@ jobs:
           zip -r FedProgressConnect.ipa Payload/
           mv FedProgressConnect.ipa ../../..
 
-      # ── 8. Create GitHub Release & upload IPA ─────────────────────────────
+      # ── 9. Create GitHub Release & upload IPA ─────────────────────────────
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
